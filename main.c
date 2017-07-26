@@ -125,6 +125,16 @@ check_request(uint8_t *buffer, int length) {
 		if(0 == strcmp(segment_dat, "adzerk")) drop = 1;
 		if(0 == strcmp(segment_dat, "adsafeprotected")) drop = 1;
 		if(0 == strcmp(segment_dat, "quantserve")) drop = 1;
+		if(0 == strcmp(segment_dat, "krxd")) drop = 1;
+		if(0 == strcmp(segment_dat, "amazon-adsystem")) drop = 1;
+		if(0 == strcmp(segment_dat, "doubleverify")) drop = 1;
+		if(0 == strcmp(segment_dat, "spotxchange")) drop = 1;
+		if(0 == strcmp(segment_dat, "openx")) drop = 1;
+		if(0 == strcmp(segment_dat, "adnxs")) drop = 1;
+		if(0 == strcmp(segment_dat, "bidswitch")) drop = 1;
+		if(0 == strcmp(segment_dat, "alexa")) drop = 1;
+		if(0 == strcmp(segment_dat, "mookie1")) drop = 1;
+		if(0 == strcmp(segment_dat, "scorecardresearch")) drop = 1;
 	}
 	// 2 byte type
 	// 2 byte class
@@ -152,6 +162,7 @@ int main(void)
 	uint8_t buffer[1024];
 	ssize_t length;
 	int check_res;
+	struct timeval tv;
 
 	if(!udp_open(&local, NULL, "53", UDP_LISTEN)) {
 		printf("could not listen\n");
@@ -161,6 +172,15 @@ int main(void)
 		printf("could not connect\n");
 		udp_close(&local);
 		return -1;
+	}
+
+	tv.tv_sec = 3;
+	tv.tv_usec = 0;
+	if(setsockopt(public.fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+		 perror("setsockopt");
+		 udp_close(&public);
+		 udp_close(&local);
+		 return -1;
 	}
 
 	struct sockaddr_storage return_addr;
@@ -176,6 +196,8 @@ int main(void)
 		
 		sendto(public.fd, buffer, length, 0, public.info->ai_addr, public.info->ai_addrlen);
 		length = recvfrom(public.fd, buffer, sizeof(buffer), 0, NULL, NULL);
+		if(length <= 0) continue;
+
 		sendto(local.fd, buffer, length, 0, (struct sockaddr *)&return_addr, return_len);
 	}
 
